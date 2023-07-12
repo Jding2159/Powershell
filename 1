@@ -1,13 +1,17 @@
 $regPath = "HKLM:\SOFTWARE\WOW6432Node\Bloomberg L.P.\Components"
+$keyName = "sotr_version"
 
 try {
     # Check if the registry path exists
     if (Test-Path $regPath) {
-        $keys = Get-ChildItem -Path $regPath -Recurse
+        $key = Get-Item -Path $regPath
 
-        # Loop through each key and display its name
-        foreach ($key in $keys) {
-            Write-Output $key.Name
+        # Check if the key has the desired value
+        if ($key.GetValue($keyName)) {
+            $value = $key.GetValue($keyName)
+            Write-Output "Registry key '$keyName' value: $value"
+        } else {
+            Write-Output "Value not found for key '$keyName'."
         }
     } else {
         Write-Output "Registry path not found."

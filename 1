@@ -5,12 +5,9 @@ try {
     if (Test-Path $regPath) {
         $keys = Get-ChildItem -Path $regPath -Recurse
 
-        # Loop through each key and check if it is the desired key "sotr_version"
+        # Loop through each key and display its name
         foreach ($key in $keys) {
-            if ($key.Name -eq "sotr_version") {
-                $value = Get-ItemProperty -Path $key.PSPath
-                Write-Output "Registry key 'sotr_version' value: $($value.sotr_version)"
-            }
+            Write-Output $key.Name
         }
     } else {
         Write-Output "Registry path not found."

@@ -1,0 +1,47 @@
+Import-Module ActiveDirectory
+
+$regPath = "HKLM:\SOFTWARE\WOW6432Node\Bloomberg L.P.\Components"
+$outputPath = "C:\Path\To\Output\File.csv"
+
+$lastLogonDateThreshold = (Get-Date).AddDays(-30)
+
+try {
+    $computers = Get-ADComputer -Filter {LastLogonDate -ge $lastLogonDateThreshold} -Property * | Select-Object -ExpandProperty Name
+
+    $results = foreach ($computer in $computers) {
+        Write-Output "Checking registry key on $computer"
+
+        try {
+            $session = New-PSSession -ComputerName $computer
+
+            # Check if the registry path exists on the remote computer
+            if (Invoke-Command -Session $session -ScriptBlock { Test-Path $using:regPath }) {
+                $keys = Invoke-Command -Session $session -ScriptBlock { Get-ChildItem -Path $using:regPath -Recurse }
+
+                $keyValuePairs = foreach ($key in $keys) {
+                    if ($key.Name -eq "sotr_version") {
+                        $value = Invoke-Command -Session $session -ScriptBlock { Get-ItemProperty -Path $using:key.PSPath }
+                        [PSCustomObject]@{
+                            ComputerName = $computer
+                            RegistryKey = $key.Name
+                            RegistryValue = $value.sotr_version
+                        }
+                    }
+                }
+                $keyValuePairs
+            } else {
+                Write-Output "Registry path not found on $computer."
+            }
+
+            Remove-PSSession $session
+        } catch {
+            Write-Output "An error occurred while checking the registry key on $computer: $($_.Exception.Message)"
+        }
+    }
+
+    # Export the results to a CSV file
+    $results | Export-Csv -Path $outputPath -NoTypeInformation
+    Write-Output "Results exported to: $outputPath"
+} catch {
+    Write-Output "An error occurred: $($_.Exception.Message)"
+}

@@ -15,12 +15,12 @@ try {
             $session = New-PSSession -ComputerName $computer
 
             # Check if the registry path exists on the remote computer
-            if (Invoke-Command -Session $session -ScriptBlock { Test-Path $using:regPath }) {
-                $keys = Invoke-Command -Session $session -ScriptBlock { Get-ChildItem -Path $using:regPath -Recurse }
+            if (Invoke-Command -Session $session -ScriptBlock { Test-Path $Using:regPath }) {
+                $keys = Invoke-Command -Session $session -ScriptBlock { Get-ChildItem -Path $Using:regPath -Recurse }
 
                 $keyValuePairs = foreach ($key in $keys) {
                     if ($key.Name -eq "sotr_version") {
-                        $value = Invoke-Command -Session $session -ScriptBlock { Get-ItemProperty -Path $using:key.PSPath }
+                        $value = Invoke-Command -Session $session -ScriptBlock { Get-ItemProperty -Path $Using:key.PSPath }
                         [PSCustomObject]@{
                             ComputerName = $computer
                             RegistryKey = $key.Name
@@ -35,7 +35,7 @@ try {
 
             Remove-PSSession $session
         } catch {
-            Write-Output "An error occurred while checking the registry key on $computer: $($_.Exception.Message)"
+            Write-Output ("An error occurred while checking the registry key on {0}: {1}" -f $computer, $_.Exception.Message)
         }
     }
 
